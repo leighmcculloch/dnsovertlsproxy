@@ -46,6 +46,7 @@ brew:
       <string>#{plist_name}</string>
       <key>ProgramArguments</key>
       <array>
+        <string>#{opt_bin}/dnsovertlsproxy</string>
         <string>-listen=:53</string>
         <string>-server=1.1.1.1:853</string>
       </array>
