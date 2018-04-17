@@ -8,7 +8,10 @@ import (
 	"io"
 	"log"
 	"net"
+	"os"
 )
+
+var version = "<not set>"
 
 const defaultServerAddr = "1.1.1.1:853"
 const defaultListenAddr = ":53"
@@ -17,6 +20,13 @@ func main() {
 	flagListenAddr := flag.String("listen", defaultListenAddr, "")
 	flagServerAddr := flag.String("server", defaultServerAddr, "")
 	flagPrintHelp := flag.Bool("help", false, "print this help")
+	flagPrintVersion := flag.Bool("version", false, "print version")
+	flagVerbose := flag.Bool("verbose", false, "enable verbose logging")
+	flag.Usage = func() {
+		fmt.Fprintf(os.Stderr, "dnsovertlsproxy is a simple DNS over TLS proxy.\n")
+		fmt.Fprintf(os.Stderr, "Usage: dnsovertlsproxy\n\n")
+		flag.PrintDefaults()
+	}
 	flag.Parse()
 
 	if *flagPrintHelp {
@@ -24,6 +34,12 @@ func main() {
 		return
 	}
 
+	if *flagPrintVersion {
+		fmt.Println("dnsovertlsproxy", "v"+version)
+		return
+	}
+
+	verbose := *flagVerbose
 	listenAddr := *flagListenAddr
 	serverAddr := *flagServerAddr
 
@@ -46,11 +62,13 @@ func main() {
 			log.Println("error", err)
 			continue
 		}
-		log.Println("received query from", addr)
+		if verbose {
+			log.Println("received query from", addr)
+		}
 		query = query[:n]
 
 		go func() {
-			resp, err := dns(serverAddr, query)
+			resp, err := dns(verbose, serverAddr, query)
 			if err != nil {
 				log.Println("error", err)
 				return
@@ -61,12 +79,14 @@ func main() {
 				log.Println("error", err)
 				return
 			}
-			log.Println("sent results to", addr)
+			if verbose {
+				log.Println("sent results to", addr)
+			}
 		}()
 	}
 }
 
-func dns(serverAddr string, query []byte) ([]byte, error) {
+func dns(verbose bool, serverAddr string, query []byte) ([]byte, error) {
 	conn, err := tls.Dial("tcp", serverAddr, &tls.Config{})
 	if err != nil {
 		return nil, err
@@ -80,13 +100,17 @@ func dns(serverAddr string, query []byte) ([]byte, error) {
 	if err != nil {
 		return nil, err
 	}
-	log.Println("sent query on to server", serverAddr)
+	if verbose {
+		log.Println("sent query on to server", serverAddr)
+	}
 
 	resp, err := dnsReadResponse(conn)
 	if err != nil {
 		return nil, err
 	}
-	log.Println("received response from server", serverAddr, len(resp), "bytes")
+	if verbose {
+		log.Println("received response from server", serverAddr, len(resp), "bytes")
+	}
 
 	return resp, nil
 }
