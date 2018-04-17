@@ -6,6 +6,17 @@ Run this application on your computer or server. It will accept standard DNS que
 
 ## Install
 
+### Binary (Linux; macOS; Windows)
+
+Download and install the binary from the [releases](https://github.com/leighmcculloch/dnsovertlsproxy/releases) page.
+
+### Brew (macOS)
+
+```
+brew install 4d63/dnsovertlsproxy/dnsovertlsproxy
+sudo brew services start dnsovertlsproxy
+```
+
 ### From Source
 
 ```
