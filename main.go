@@ -3,16 +3,31 @@ package main // import "4d63.com/dnsovertlsproxy"
 import (
 	"crypto/tls"
 	"encoding/binary"
+	"flag"
 	"fmt"
 	"io"
 	"log"
 	"net"
 )
 
-const dnsHost = "1.1.1.1:853"
+const defaultServerAddr = "1.1.1.1:853"
+const defaultListenAddr = ":53"
 
 func main() {
-	laddr, err := net.ResolveUDPAddr("udp", ":53")
+	flagListenAddr := flag.String("listen", defaultListenAddr, "")
+	flagServerAddr := flag.String("server", defaultServerAddr, "")
+	flagPrintHelp := flag.Bool("help", false, "print this help")
+	flag.Parse()
+
+	if *flagPrintHelp {
+		flag.Usage()
+		return
+	}
+
+	listenAddr := *flagListenAddr
+	serverAddr := *flagServerAddr
+
+	laddr, err := net.ResolveUDPAddr("udp", listenAddr)
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -35,7 +50,7 @@ func main() {
 		query = query[:n]
 
 		go func() {
-			resp, err := dns(query)
+			resp, err := dns(serverAddr, query)
 			if err != nil {
 				log.Println("error", err)
 				return
@@ -51,8 +66,8 @@ func main() {
 	}
 }
 
-func dns(query []byte) ([]byte, error) {
-	conn, err := tls.Dial("tcp", dnsHost, &tls.Config{})
+func dns(serverAddr string, query []byte) ([]byte, error) {
+	conn, err := tls.Dial("tcp", serverAddr, &tls.Config{})
 	if err != nil {
 		return nil, err
 	}
@@ -65,13 +80,13 @@ func dns(query []byte) ([]byte, error) {
 	if err != nil {
 		return nil, err
 	}
-	log.Println("sent query on to dns host", dnsHost)
+	log.Println("sent query on to server", serverAddr)
 
 	resp, err := dnsReadResponse(conn)
 	if err != nil {
 		return nil, err
 	}
-	log.Println("received response from dns host", dnsHost, len(resp), "bytes")
+	log.Println("received response from server", serverAddr, len(resp), "bytes")
 
 	return resp, nil
 }
