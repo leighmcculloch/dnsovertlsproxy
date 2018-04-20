@@ -67,22 +67,20 @@ func main() {
 		}
 		query = query[:n]
 
-		go func() {
-			resp, err := dns(verbose, serverAddr, query)
-			if err != nil {
-				log.Println("error", err)
-				return
-			}
+		resp, err := dns(verbose, serverAddr, query)
+		if err != nil {
+			log.Println("error", err)
+			return
+		}
 
-			_, err = conn.WriteToUDP(resp, addr)
-			if err != nil {
-				log.Println("error", err)
-				return
-			}
-			if verbose {
-				log.Println("sent results to", addr)
-			}
-		}()
+		_, err = conn.WriteToUDP(resp, addr)
+		if err != nil {
+			log.Println("error", err)
+			return
+		}
+		if verbose {
+			log.Println("sent results to", addr)
+		}
 	}
 }
 
