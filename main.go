@@ -70,13 +70,13 @@ func main() {
 		resp, err := dns(verbose, serverAddr, query)
 		if err != nil {
 			log.Println("error", err)
-			return
+			continue
 		}
 
 		_, err = conn.WriteToUDP(resp, addr)
 		if err != nil {
 			log.Println("error", err)
-			return
+			continue
 		}
 		if verbose {
 			log.Println("sent results to", addr)
